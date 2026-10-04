@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sample Well Water Report</title>
+<style>
+  body { font-family: "Helvetica Neue", Arial, sans-serif; color: #111; max-width: 760px; margin: 32px auto; padding: 0 24px; font-size: 14px; }
+  header { display: flex; justify-content: space-between; border-bottom: 3px solid #1d4e6b; padding-bottom: 12px; }
+  h1 { font-size: 22px; margin: 0; color: #1d4e6b; }
+  .small { font-size: 12px; color: #444; }
+  table { width: 100%; border-collapse: collapse; margin-top: 18px; }
+  th, td { border: 1px solid #999; padding: 7px 9px; text-align: left; }
+  th { background: #e8eef2; font-size: 12px; text-transform: uppercase; }
+  .meta td { border: none; padding: 3px 8px 3px 0; }
+  .stamp { margin-top: 28px; padding: 10px; border: 2px dashed #b00; color: #b00; text-align: center; font-weight: bold; }
+  @media print { body { margin: 0 auto; } }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>North Star Water Testing</h1>
+    <div class="small">Private Well Water Analysis Report</div>
+  </div>
+  <div class="small" style="text-align:right">Report #NSW-26-04417<br>Page 1 of 1</div>
+</header>
+
+<table class="meta">
+  <tr><td><b>Client:</b> Sample Household</td><td><b>Sample collected:</b> 2026-09-02</td></tr>
+  <tr><td><b>County:</b> Wright</td><td><b>Received:</b> 2026-09-03</td></tr>
+  <tr><td><b>Sample type:</b> Private well, kitchen tap</td><td><b>Reported:</b> 2026-09-09</td></tr>
+</table>
+
+<table>
+  <tr><th>Analyte</th><th>Result</th><th>Units</th><th>Reporting limit</th><th>Method</th></tr>
+  <tr><td>Nitrate + Nitrite as N</td><td>14.2</td><td>mg/L</td><td>0.10</td><td>EPA 353.2</td></tr>
+  <tr><td>Arsenic</td><td>3.8</td><td>µg/L</td><td>1.0</td><td>EPA 200.8</td></tr>
+  <tr><td>Lead</td><td>&lt;1.0</td><td>µg/L</td><td>1.0</td><td>EPA 200.8</td></tr>
+  <tr><td>Manganese</td><td>0.14</td><td>mg/L</td><td>0.005</td><td>EPA 200.8</td></tr>
+  <tr><td>Fluoride</td><td>0.4</td><td>mg/L</td><td>0.10</td><td>SM 4500-F C</td></tr>
+  <tr><td>Total Coliform Bacteria</td><td>Absent</td><td>P/A per 100 mL</td><td>—</td><td>SM 9223 B</td></tr>
+  <tr><td>E. coli</td><td>Absent</td><td>P/A per 100 mL</td><td>—</td><td>SM 9223 B</td></tr>
+</table>
+
+<p class="small" style="margin-top:16px">&lt; = not detected at or above the reporting limit. P/A = presence/absence.</p>
+
+<div class="stamp">SAMPLE REPORT FOR APP TESTING — NOT A REAL TEST RESULT. "North Star Water Testing" is a made-up lab.</div>
+</body>
+</html>
