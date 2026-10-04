@@ -1,0 +1,22 @@
+{
+  "name": "clearwell-server",
+  "private": true,
+  "type": "module",
+  "description": "Tiny server that lets the ClearWell app use Claude without putting the API key in the app.",
+  "scripts": {
+    "dev": "tsx watch dev-server.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.131.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}
