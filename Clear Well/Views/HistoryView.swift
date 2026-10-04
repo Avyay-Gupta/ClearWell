@@ -45,6 +45,7 @@ struct HistoryView: View {
                             router.tab = .add
                         }
                         .buttonStyle(.borderedProminent)
+                        .tint(.actionBlue)
                     }
                 } else {
                     list
@@ -86,7 +87,7 @@ struct HistoryView: View {
                                     .padding(.horizontal, 14)
                                     .padding(.vertical, 8)
                                     .foregroundStyle(selected == contaminant ? Color.white : Color.primary)
-                                    .background(selected == contaminant ? Color.accentColor : Color(.tertiarySystemFill), in: Capsule())
+                                    .background(selected == contaminant ? Color.actionBlue : Color(.tertiarySystemFill), in: Capsule())
                             }
                             .buttonStyle(.plain)
                             .accessibilityAddTraits(selected == contaminant ? .isSelected : [])
@@ -160,13 +161,12 @@ private struct ContaminantChart: View {
                     x: .value("Date", point.date),
                     y: .value(limit.unit, point.value))
                     .foregroundStyle(Color.accentColor)
-                    .interpolationMethod(.monotone)
 
                 let status = OfficialLimits.status(for: contaminant, value: point.value, infantOrPregnantAtHome: profile.infantOrPregnant)
                 PointMark(
                     x: .value("Date", point.date),
                     y: .value(limit.unit, point.value))
-                    .foregroundStyle(status.color)
+                    .foregroundStyle(by: .value("Status", status.title))
                     .symbol(by: .value("Status", status.title))
                     .symbolSize(90)
                     .annotation(position: .top) {
@@ -177,6 +177,11 @@ private struct ContaminantChart: View {
             }
         }
         .chartYScale(domain: 0...yMax)
+        .chartForegroundStyleScale([
+            WaterStatus.green.title: WaterStatus.green.color,
+            WaterStatus.amber.title: WaterStatus.amber.color,
+            WaterStatus.red.title: WaterStatus.red.color,
+        ])
         .chartSymbolScale([
             WaterStatus.green.title: .circle,
             WaterStatus.amber.title: .triangle,

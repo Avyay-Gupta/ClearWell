@@ -85,6 +85,7 @@ struct OnboardingView: View {
                     .padding(.vertical, 6)
             }
             .buttonStyle(.borderedProminent)
+            .tint(.actionBlue)
             .controlSize(.large)
             .padding(.bottom, 24)
         }

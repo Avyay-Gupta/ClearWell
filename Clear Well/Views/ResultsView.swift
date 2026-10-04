@@ -50,6 +50,7 @@ struct ResultsView: View {
                             .padding(.vertical, 6)
                     }
                     .buttonStyle(.borderedProminent)
+                    .tint(.actionBlue)
                     .controlSize(.large)
                 }
 
@@ -185,7 +186,7 @@ struct ContaminantCard: View {
                 Text(reading.formatted)
                     .font(.system(.title, design: .rounded).bold())
                     .monospacedDigit()
-                Text(limit.limitLabel)
+                Text(limit.limitLabel.keepingUnitsTogether)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -194,7 +195,7 @@ struct ContaminantCard: View {
                 LimitBar(value: reading.value, amberAt: limit.amberAt, redAt: red, unit: limit.unit)
             }
 
-            Text(explanation.text)
+            Text(explanation.text.keepingUnitsTogether)
                 .font(.body)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -209,7 +210,7 @@ struct ContaminantCard: View {
                     Text("What to do next")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(status == .green ? Color.secondary : status.color)
-                    Text(explanation.nextStep)
+                    Text(explanation.nextStep.keepingUnitsTogether)
                         .font(.subheadline)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -243,20 +244,14 @@ struct ContaminantCard: View {
                     .font(.subheadline.weight(.semibold))
             }
         }
-        .card()
-        .overlay(alignment: .leading) {
-            UnevenRoundedRectangle(topLeadingRadius: 22, bottomLeadingRadius: 22, style: .continuous)
-                .fill(status.color)
-                .frame(width: 6)
-                .accessibilityHidden(true)
-        }
+        .card(accent: status.color)
     }
 
     private func detail(_ title: String, _ text: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
                 .font(.subheadline.weight(.semibold))
-            Text(text)
+            Text(text.keepingUnitsTogether)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)

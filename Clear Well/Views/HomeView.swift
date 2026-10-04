@@ -30,6 +30,7 @@ struct HomeView: View {
                             .padding(.vertical, 8)
                     }
                     .buttonStyle(.borderedProminent)
+                    .tint(.actionBlue)
                     .controlSize(.large)
 
                     if let latest = store.latestTest {

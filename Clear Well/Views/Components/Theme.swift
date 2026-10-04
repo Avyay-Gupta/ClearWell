@@ -16,21 +16,34 @@ extension Color {
 }
 
 /// Rounded card with a soft shadow — the main building block of every screen.
+/// An optional accent draws a colored stripe down the left edge (used for status).
 struct CardModifier: ViewModifier {
     var padding: CGFloat = 18
+    var accent: Color?
 
     func body(content: Content) -> some View {
+        let shape = RoundedRectangle(cornerRadius: 22, style: .continuous)
         content
             .padding(padding)
+            .padding(.leading, accent == nil ? 0 : 4)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.cardBackground, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-            .shadow(color: .black.opacity(0.06), radius: 10, y: 3)
+            .background {
+                shape
+                    .fill(Color.cardBackground)
+                    .overlay(alignment: .leading) {
+                        if let accent {
+                            Rectangle().fill(accent).frame(width: 6)
+                        }
+                    }
+                    .clipShape(shape)
+                    .shadow(color: .black.opacity(0.06), radius: 10, y: 3)
+            }
     }
 }
 
 extension View {
-    func card(padding: CGFloat = 18) -> some View {
-        modifier(CardModifier(padding: padding))
+    func card(padding: CGFloat = 18, accent: Color? = nil) -> some View {
+        modifier(CardModifier(padding: padding, accent: accent))
     }
 }
 

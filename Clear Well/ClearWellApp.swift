@@ -3,11 +3,18 @@ import UserNotifications
 
 @main
 struct ClearWellApp: App {
-    @State private var store = WaterStore()
-    @State private var router = AppRouter()
+    @State private var store: WaterStore
+    @State private var router: AppRouter
     private let notificationPresenter = NotificationPresenter()
 
     init() {
+        let store = WaterStore()
+        let router = AppRouter()
+        #if DEBUG
+        LaunchOptions.apply(to: router, store: store)
+        #endif
+        _store = State(initialValue: store)
+        _router = State(initialValue: router)
         UNUserNotificationCenter.current().delegate = notificationPresenter
     }
 

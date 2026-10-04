@@ -77,6 +77,31 @@ struct OfficialLimitsTests {
 }
 
 @MainActor
+struct StandardExplainerTests {
+    @Test("High nitrate with a baby at home leads with the infant risk")
+    func infantFirst() {
+        let profile = HouseholdProfile(infantOrPregnant: true, wellAge: .notSure, county: .wright)
+        let explanation = StandardExplainer.explain(Reading(contaminant: .nitrate, value: 14.2), profile: profile, trend: nil)
+        #expect(explanation.text.hasPrefix("This matters most in your home: babies"))
+        #expect(explanation.text.contains("above the official limit of 10 mg/L"))
+        #expect(explanation.nextStep.contains("bottled water"))
+        #expect(explanation.origin == .standard)
+    }
+
+    @Test("Without a baby at home, the explanation starts with the result")
+    func noInfant() {
+        let explanation = StandardExplainer.explain(Reading(contaminant: .arsenic, value: 3.8), profile: HouseholdProfile(), trend: nil)
+        #expect(explanation.text.hasPrefix("Your arsenic is 3.8 µg/L."))
+    }
+
+    @Test("First sentence handles a period inside quotes")
+    func firstSentence() {
+        let text = "It is called \"blue baby syndrome.\" Levels above 3 mg/L matter."
+        #expect(text.firstSentence == "It is called \"blue baby syndrome.\"")
+    }
+}
+
+@MainActor
 struct UnitConversionTests {
     @Test("µg/L and mg/L convert into the table's unit")
     func microgramsAndMilligrams() {
