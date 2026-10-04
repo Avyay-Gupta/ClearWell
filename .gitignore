@@ -1,0 +1,12 @@
+# Xcode
+xcuserdata/
+DerivedData/
+build/
+*.xcuserstate
+.DS_Store
+
+# Server
+server/node_modules/
+server/.env
+server/.env.local
+server/.vercel/
