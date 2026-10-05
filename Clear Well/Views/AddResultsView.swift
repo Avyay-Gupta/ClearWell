@@ -36,6 +36,10 @@ struct AddResultsView: View {
                         detail: "Take a photo. ClearWell reads the numbers for you.") {
                         if cameraAvailable { showSourceChoice = true } else { showPhotoPicker = true }
                     }
+                    .confirmationDialog("Scan my lab report", isPresented: $showSourceChoice, titleVisibility: .visible) {
+                        Button("Take a photo") { showCamera = true }
+                        Button("Choose from Photos") { showPhotoPicker = true }
+                    }
 
                     choiceCard(
                         icon: "keyboard",
@@ -62,10 +66,6 @@ struct AddResultsView: View {
                     ResultsView(testID: id)
                 }
             }
-        }
-        .confirmationDialog("Scan my lab report", isPresented: $showSourceChoice, titleVisibility: .visible) {
-            Button("Take a photo") { showCamera = true }
-            Button("Choose from Photos") { showPhotoPicker = true }
         }
         .photosPicker(isPresented: $showPhotoPicker, selection: $photoItem, matching: .images)
         .fullScreenCover(isPresented: $showCamera) {

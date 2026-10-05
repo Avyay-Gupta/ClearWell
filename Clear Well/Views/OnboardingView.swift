@@ -6,6 +6,7 @@ struct OnboardingView: View {
     @State private var step = 0
     @State private var draft = HouseholdProfile()
     @State private var answeredInfant = false
+    @State private var answeredWellAge = false
 
     private let questionCount = 3
 
@@ -113,8 +114,9 @@ struct OnboardingView: View {
             title: "About how old is your well?",
             subtitle: "Older wells can be more likely to let surface water in.") {
             ForEach(WellAge.allCases) { age in
-                choice(age.label, icon: "calendar", selected: draft.wellAge == age) {
+                choice(age.label, icon: "calendar", selected: answeredWellAge && draft.wellAge == age) {
                     draft.wellAge = age
+                    answeredWellAge = true
                     step = 3
                 }
             }

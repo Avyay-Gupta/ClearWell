@@ -174,10 +174,20 @@ struct NextTestCard: View {
                 .font(.headline)
 
             if let next = upcoming.first {
+                let others = upcoming.dropFirst()
+                let untested = others.filter(\.neverTested).map { $0.contaminant.name.lowercased() }
+                let scheduled = others.filter { !$0.neverTested }.prefix(2)
+                    .map { "\($0.contaminant.name.lowercased()) \(TestingSchedule.relativeDescription(of: $0.date))" }
+
                 Text(headline(for: next))
                     .font(.title3.weight(.semibold))
-                if upcoming.count > 1 {
-                    Text("Also coming up: " + upcoming.dropFirst().prefix(3).map { "\($0.contaminant.name.lowercased()) \(TestingSchedule.relativeDescription(of: $0.date))" }.joined(separator: ", "))
+                if !untested.isEmpty {
+                    Text("Also not tested yet: " + untested.joined(separator: ", "))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                if !scheduled.isEmpty {
+                    Text("Coming up: " + scheduled.joined(separator: ", "))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }

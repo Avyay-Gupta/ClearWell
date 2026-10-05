@@ -32,24 +32,26 @@ enum TestingSchedule {
         }
     }
 
-    /// Everything that is due, soonest first.
+    /// Everything that is due, soonest first. Ties keep the order of the limits table.
     static func upcoming(tests: [WaterTest], now: Date = .now) -> [Due] {
         Contaminant.allCases
             .compactMap { nextDue(for: $0, tests: tests, now: now) }
-            .sorted { $0.date < $1.date }
+            .enumerated()
+            .sorted { ($0.element.date, $0.offset) < ($1.element.date, $1.offset) }
+            .map(\.element)
     }
 
-    /// "now", "in 4 months", "in 12 days".
+    /// "now", "tomorrow", "in 12 days", "in 4 months". Anything due today or earlier is "now".
     static func relativeDescription(of date: Date, now: Date = .now, calendar: Calendar = .current) -> String {
-        let startOfToday = calendar.startOfDay(for: now)
-        if date <= startOfToday { return "now" }
-        let parts = calendar.dateComponents([.month, .day], from: startOfToday, to: calendar.startOfDay(for: date))
+        let today = calendar.startOfDay(for: now)
+        let day = calendar.startOfDay(for: date)
+        if day <= today { return "now" }
+        let parts = calendar.dateComponents([.month, .day], from: today, to: day)
         let months = parts.month ?? 0
         let days = parts.day ?? 0
         if months >= 1 {
             return months == 1 ? "in 1 month" : "in \(months) months"
         }
-        if days <= 1 { return "tomorrow" }
-        return "in \(days) days"
+        return days == 1 ? "tomorrow" : "in \(days) days"
     }
 }

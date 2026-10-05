@@ -140,6 +140,27 @@ struct ScheduleAndTrendTests {
         #expect(TestingSchedule.nextDue(for: .arsenic, tests: tests, now: date(2026)) == nil)
     }
 
+    @Test("Due dates read as now, tomorrow, days or months")
+    func relativeDescriptions() {
+        let calendar = Calendar.current
+        let noon = calendar.date(bySettingHour: 12, minute: 0, second: 0, of: date(2026))!
+        let earlierToday = calendar.date(byAdding: .hour, value: -3, to: noon)!
+        #expect(TestingSchedule.relativeDescription(of: earlierToday, now: noon) == "now")
+        #expect(TestingSchedule.relativeDescription(of: noon, now: noon) == "now")
+        #expect(TestingSchedule.relativeDescription(of: calendar.date(byAdding: .day, value: 1, to: noon)!, now: noon) == "tomorrow")
+        #expect(TestingSchedule.relativeDescription(of: calendar.date(byAdding: .day, value: 12, to: noon)!, now: noon) == "in 12 days")
+        #expect(TestingSchedule.relativeDescription(of: calendar.date(byAdding: .month, value: 4, to: noon)!, now: noon) == "in 4 months")
+    }
+
+    @Test("With no tests, nitrate comes first and everything is due now")
+    func newUserSchedule() {
+        let upcoming = TestingSchedule.upcoming(tests: [], now: date(2026))
+        #expect(upcoming.first?.contaminant == .nitrate)
+        let allNeverTested = upcoming.allSatisfy { $0.neverTested }
+        #expect(allNeverTested)
+        #expect(upcoming.count == Contaminant.allCases.count)
+    }
+
     @Test("Trend detects four rising nitrate tests")
     func risingTrend() throws {
         let values: [(Int, Double)] = [(2023, 2.1), (2024, 2.4), (2025, 3.1), (2026, 4.0)]
