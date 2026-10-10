@@ -28,9 +28,7 @@ struct GetHelpView: View {
                     } header: {
                         Text("Near you · \(county.fullName)")
                     } footer: {
-                        if LocalResources.countyContacts[county] == nil {
-                            Text("County environmental health contacts are coming soon.")
-                        }
+                        Text("Labs are listed by MDH as accredited for private well water. MDH does not endorse any lab; call ahead for prices.")
                     }
                 }
 

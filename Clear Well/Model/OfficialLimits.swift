@@ -15,13 +15,13 @@ import Foundation
 //      formula, 300 µg/L for everyone else.
 //    • MDH testing schedule: coliform every year, nitrate every other year,
 //      arsenic and lead at least once.
-//  Still to check:
-//    • Amber starting points for arsenic (1 µg/L) and lead (1 µg/L) — both
-//      have "no known safe level", so any detection is amber.
+//    • Carver County's well-testing page (citing MDH): arsenic "as close to 0
+//      as possible", lead has "no known safe level", manganese "at least once
+//      before a baby drinks the water". So any detected arsenic or lead is amber.
+//  Still a judgment call for the team:
 //    • Lead red line uses the EPA action level of 15 µg/L. EPA's newer rule
 //      lowers it to 10 µg/L in Nov 2027 — decide which to show.
-//    • Fluoride and manganese retest timing (MDH gives no schedule; we use
-//      "at least once").
+//    • Fluoride retest timing (MDH gives no schedule; we use "at least once").
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// How often MDH recommends testing for a contaminant.
