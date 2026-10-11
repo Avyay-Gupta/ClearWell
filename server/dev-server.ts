@@ -8,10 +8,15 @@ if (existsSync(".env")) process.loadEnvFile(".env");
 const { POST: explain } = await import("./api/explain.js");
 const { POST: scan } = await import("./api/scan.js");
 const { GET: health } = await import("./api/health.js");
+const { POST: conserve } = await import("./api/conserve.js");
+const challenges = await import("./api/challenges.js");
 
 const routes: Record<string, (request: Request) => Response | Promise<Response>> = {
   "POST /api/explain": explain,
   "POST /api/scan": scan,
+  "POST /api/conserve": conserve,
+  "GET /api/challenges": challenges.GET,
+  "POST /api/challenges": challenges.POST,
   "GET /api/health": () => health(),
 };
 

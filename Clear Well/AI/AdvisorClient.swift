@@ -112,6 +112,74 @@ struct AdvisorClient {
         try await post("api/scan", body: ScanRequest(imageBase64: jpegData.base64EncodedString(), mediaType: "image/jpeg"), timeout: 120)
     }
 
+    // MARK: - Conservation tips
+
+    /// What the AI is told about the household's water use. Only numbers worked out on the phone.
+    struct ConserveRequest: Encodable {
+        struct Comparison: Encodable {
+            var period: String
+            var currentGallonsPerDay: Int
+            var previousGallonsPerDay: Int
+            var percentChange: Int
+        }
+        var season: String
+        var county: String
+        var waterSource: String
+        var people: Int
+        var outdoorWatering: String
+        var olderToilets: String
+        var olderShowerheads: String
+        var latestGallonsPerDay: Int?
+        var typicalGallonsPerDay: Int?
+        var comparisons: [Comparison]
+        var possibleLeak: Bool
+        var goalPercent: Int?
+        var countyInDrought: Bool
+    }
+
+    private struct ConserveResponse: Decodable {
+        struct Item: Decodable {
+            var title: String
+            var detail: String
+            var estimatedGallonsPerYear: Double?
+            var estimateBasis: String?
+        }
+        var recommendations: [Item]
+    }
+
+    func conserve(_ body: ConserveRequest) async throws -> [Recommendation] {
+        let response: ConserveResponse = try await post("api/conserve", body: body, timeout: 60)
+        return response.recommendations.enumerated().map { index, item in
+            Recommendation(
+                id: "ai-\(index)", title: item.title, detail: item.detail,
+                estimatedGallonsPerYear: item.estimatedGallonsPerYear, estimateBasis: item.estimateBasis, origin: .ai)
+        }
+    }
+
+    // MARK: - Community challenges
+
+    func challenges() async throws -> ChallengeList {
+        try await send(makeRequest("api/challenges", timeout: 20))
+    }
+
+    private struct ChallengeUpdate: Encodable {
+        var action: String          // "join", "progress" or "leave"
+        var challengeId: String
+        var participantId: String
+        var measuredGallonsSaved: Double?
+        var completedActions: [String]
+    }
+
+    /// Sends this household's anonymous progress. Returns the updated challenge list.
+    func updateChallenge(action: String, participation: ChallengeParticipation, measuredGallonsSaved: Double?) async throws -> ChallengeList {
+        try await post("api/challenges", body: ChallengeUpdate(
+            action: action,
+            challengeId: participation.challengeID,
+            participantId: participation.participantID.uuidString,
+            measuredGallonsSaved: measuredGallonsSaved,
+            completedActions: participation.completedActions.sorted()), timeout: 20)
+    }
+
     // MARK: - Health check
 
     struct Health: Decodable {

@@ -1,12 +1,7 @@
 import PhotosUI
 import SwiftUI
 
-enum AddRoute: Hashable {
-    case form(TestDraft)
-    case results(WaterTest.ID)
-}
-
-/// Two ways in: scan the lab report, or type it in.
+/// Two ways in: scan the lab report, or type it in. Shown inside the Water Quality tab.
 struct AddResultsView: View {
     @Environment(WaterStore.self) private var store
     @Environment(AppRouter.self) private var router
@@ -21,52 +16,41 @@ struct AddResultsView: View {
     private var cameraAvailable: Bool { UIImagePickerController.isSourceTypeAvailable(.camera) }
 
     var body: some View {
-        @Bindable var router = router
-        NavigationStack(path: $router.addPath) {
-            ScrollView {
-                VStack(spacing: 16) {
-                    Text("Use the report you got back from your water testing lab.")
-                        .font(.body)
-                        .foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+        ScrollView {
+            VStack(spacing: 16) {
+                Text("Use the report you got back from your water testing lab.")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
-                    choiceCard(
-                        icon: "doc.text.viewfinder",
-                        title: "Scan my lab report",
-                        detail: "Take a photo. ClearWell reads the numbers for you.") {
-                        if cameraAvailable { showSourceChoice = true } else { showPhotoPicker = true }
-                    }
-                    .confirmationDialog("Scan my lab report", isPresented: $showSourceChoice, titleVisibility: .visible) {
-                        Button("Take a photo") { showCamera = true }
-                        Button("Choose from Photos") { showPhotoPicker = true }
-                    }
-
-                    choiceCard(
-                        icon: "keyboard",
-                        title: "Type it in",
-                        detail: "Enter the numbers from your report in a simple form.") {
-                        router.addPath.append(.form(TestDraft(county: store.currentProfile.county)))
-                    }
-
-                    Label("You'll check every number before anything is saved.", systemImage: "eye")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, 4)
+                choiceCard(
+                    icon: "doc.text.viewfinder",
+                    title: "Scan my lab report",
+                    detail: "Take a photo. ClearWell reads the numbers for you.") {
+                    if cameraAvailable { showSourceChoice = true } else { showPhotoPicker = true }
                 }
-                .padding()
-            }
-            .background(Color.appBackground)
-            .navigationTitle("Add Results")
-            .navigationDestination(for: AddRoute.self) { route in
-                switch route {
-                case .form(let draft):
-                    TestFormView(initialDraft: draft)
-                case .results(let id):
-                    ResultsView(testID: id)
+                .confirmationDialog("Scan my lab report", isPresented: $showSourceChoice, titleVisibility: .visible) {
+                    Button("Take a photo") { showCamera = true }
+                    Button("Choose from Photos") { showPhotoPicker = true }
                 }
+
+                choiceCard(
+                    icon: "keyboard",
+                    title: "Type it in",
+                    detail: "Enter the numbers from your report in a simple form.") {
+                    router.qualityPath.append(.form(TestDraft(county: store.currentProfile.county)))
+                }
+
+                Label("You'll check every number before anything is saved.", systemImage: "eye")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 4)
             }
+            .padding()
         }
+        .background(Color.appBackground)
+        .navigationTitle("Add Results")
         .photosPicker(isPresented: $showPhotoPicker, selection: $photoItem, matching: .images)
         .fullScreenCover(isPresented: $showCamera) {
             CameraPicker { image in
@@ -90,7 +74,7 @@ struct AddResultsView: View {
         }
         .alert("Couldn't read the report", isPresented: Binding(get: { scanError != nil }, set: { if !$0 { scanError = nil } })) {
             Button("Type it in instead") {
-                router.addPath.append(.form(TestDraft(county: store.currentProfile.county)))
+                router.qualityPath.append(.form(TestDraft(county: store.currentProfile.county)))
             }
             Button("OK", role: .cancel) {}
         } message: {
@@ -137,7 +121,7 @@ struct AddResultsView: View {
             if draft.readings.isEmpty {
                 scanError = "No water test results were found in this photo. Try a clearer, well-lit photo of the results page, or type the numbers in."
             } else {
-                router.addPath.append(.form(draft))
+                router.qualityPath.append(.form(draft))
             }
         } catch {
             scanError = error.localizedDescription

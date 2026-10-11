@@ -165,6 +165,6 @@ struct TestFormView: View {
         let test = draft.makeTest()
         store.add(test)
         UINotificationFeedbackGenerator().notificationOccurred(.success)
-        router.addPath = [.results(test.id)]
+        router.qualityPath = [.results(test.id)]
     }
 }

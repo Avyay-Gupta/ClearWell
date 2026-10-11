@@ -5,6 +5,7 @@ import UserNotifications
 struct ClearWellApp: App {
     @State private var store: WaterStore
     @State private var router: AppRouter
+    @State private var localWater = LocalWaterStore()
     private let notificationPresenter = NotificationPresenter()
 
     init() {
@@ -23,19 +24,26 @@ struct ClearWellApp: App {
             RootView()
                 .environment(store)
                 .environment(router)
+                .environment(localWater)
         }
     }
 }
 
 enum AppTab: Hashable {
-    case home, add, history, help
+    case home, quality, conserve, community, help
 }
 
 /// Shared navigation state, so one screen can send the user to another tab.
 @Observable
 final class AppRouter {
     var tab: AppTab = .home
-    var addPath: [AddRoute] = []
+    var qualityPath: [QualityRoute] = []
+
+    /// Opens the Water Quality tab on the "Add a water test" screen.
+    func showAddResults() {
+        qualityPath = [.add]
+        tab = .quality
+    }
 }
 
 struct RootView: View {
@@ -53,7 +61,9 @@ struct RootView: View {
         }
         .animation(.easeInOut(duration: 0.3), value: store.profile == nil)
         .task(id: store.tests) {
-            await ReminderScheduler.reschedule(tests: store.tests, enabled: store.settings.remindersOn)
+            // Retest reminders follow MDH's private-well schedule.
+            let enabled = store.settings.remindersOn && store.currentProfile.hasPrivateWell
+            await ReminderScheduler.reschedule(tests: store.tests, enabled: enabled)
         }
     }
 }
@@ -67,11 +77,14 @@ struct MainTabView: View {
             Tab("Home", systemImage: "drop.fill", value: AppTab.home) {
                 HomeView()
             }
-            Tab("Add Results", systemImage: "plus.circle.fill", value: AppTab.add) {
-                AddResultsView()
+            Tab("Water Quality", systemImage: "testtube.2", value: AppTab.quality) {
+                WaterQualityView()
             }
-            Tab("History", systemImage: "chart.xyaxis.line", value: AppTab.history) {
-                HistoryView()
+            Tab("Conserve", systemImage: "gauge.with.dots.needle.33percent", value: AppTab.conserve) {
+                ConserveView()
+            }
+            Tab("Community", systemImage: "person.3.fill", value: AppTab.community) {
+                CommunityView()
             }
             Tab("Get Help", systemImage: "phone.fill", value: AppTab.help) {
                 GetHelpView()

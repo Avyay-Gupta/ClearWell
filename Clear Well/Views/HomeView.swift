@@ -4,6 +4,9 @@ import SwiftUI
 struct HomeView: View {
     @Environment(WaterStore.self) private var store
     @Environment(AppRouter.self) private var router
+    @Environment(LocalWaterStore.self) private var localWater
+
+    private var profile: HouseholdProfile { store.currentProfile }
 
     var body: some View {
         NavigationStack {
@@ -14,15 +17,18 @@ struct HomeView: View {
                             StatusCard(test: latest, profile: store.currentProfile)
                         }
                         .buttonStyle(.plain)
-                    } else {
+                    } else if profile.hasPrivateWell {
                         welcomeCard
+                    } else {
+                        cityWaterCard
                     }
 
-                    NextTestCard(upcoming: TestingSchedule.upcoming(tests: store.tests), hasTests: !store.tests.isEmpty)
+                    if profile.hasPrivateWell {
+                        NextTestCard(upcoming: TestingSchedule.upcoming(tests: store.tests), hasTests: !store.tests.isEmpty)
+                    }
 
                     Button {
-                        router.addPath = []
-                        router.tab = .add
+                        router.showAddResults()
                     } label: {
                         Label("Add new test results", systemImage: "plus")
                             .font(.headline)
@@ -35,6 +41,12 @@ struct HomeView: View {
 
                     if let latest = store.latestTest {
                         latestResults(latest)
+                    }
+
+                    WaterUseCard(intervals: store.usageIntervals) { router.tab = .conserve }
+
+                    if let drought = localWater.drought {
+                        LocalConditionsCard(drought: drought) { router.tab = .community }
                     }
 
                     TrustNote()
@@ -57,7 +69,30 @@ struct HomeView: View {
             .navigationDestination(for: WaterTest.ID.self) { id in
                 ResultsView(testID: id)
             }
+            .task(id: profile.county) {
+                await localWater.refreshIfNeeded(county: profile.county)
+            }
         }
+    }
+
+    private var cityWaterCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Image(systemName: "building.2.fill")
+                .font(.system(size: 40))
+                .foregroundStyle(.tint)
+            Text("Welcome to ClearWell")
+                .font(.title2.bold())
+            Text("Your water comes from a city or community system, which is tested regularly. Each year your water supplier publishes a water quality report you can read.")
+                .foregroundStyle(.secondary)
+            Link(destination: URL(string: "https://www.epa.gov/ccr")!) {
+                Label("Find your annual water quality report (EPA)", systemImage: "arrow.up.right.square")
+                    .font(.subheadline.weight(.semibold))
+            }
+            Text("Use ClearWell to track and cut your water use, follow local water conditions, and add a test if you have one done — for example for lead from older pipes.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .card()
     }
 
     private var welcomeCard: some View {
@@ -210,5 +245,79 @@ struct NextTestCard: View {
         if due.neverTested { return "\(name) — not tested yet" }
         let when = TestingSchedule.relativeDescription(of: due.date)
         return when == "now" ? "\(name) — due now" : "\(name) \(when)"
+    }
+}
+
+/// Home summary of household water use.
+struct WaterUseCard: View {
+    var intervals: [UsageInterval]
+    var open: () -> Void
+
+    var body: some View {
+        Button(action: open) {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Label("Water use", systemImage: "gauge.with.dots.needle.33percent")
+                        .font(.headline)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .foregroundStyle(.tertiary)
+                }
+                if let latest = intervals.last {
+                    Text("\(latest.gallonsPerDay.gallonsText) gallons a day")
+                        .font(.title3.weight(.semibold))
+                    if UsageAnalysis.unusualUsage(intervals) != nil {
+                        Label("Unusual use — possible leak", systemImage: "exclamationmark.triangle.fill")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.orange)
+                    } else if let comparison = UsageAnalysis.comparisons(intervals).last {
+                        HStack {
+                            Text("Last \(comparison.label.lowercased()) vs. the one before")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            ChangeLabel(percent: comparison.percentChange)
+                        }
+                    }
+                } else {
+                    Text("Track your use from meter readings or water bills, set a goal, and catch leaks early.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.leading)
+                }
+            }
+            .foregroundStyle(.primary)
+            .card()
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+/// Home summary of the county's drought status.
+struct LocalConditionsCard: View {
+    var drought: DroughtSummary
+    var open: () -> Void
+
+    var body: some View {
+        Button(action: open) {
+            HStack(spacing: 14) {
+                Image(systemName: "sun.max.fill")
+                    .font(.title2)
+                    .foregroundStyle(drought.inDrought ? Color.orange : Color.accentColor)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Local water")
+                        .font(.headline)
+                    Text("\(drought.worstCategory) in \(drought.county)")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .foregroundStyle(.tertiary)
+            }
+            .foregroundStyle(.primary)
+            .card()
+        }
+        .buttonStyle(.plain)
     }
 }

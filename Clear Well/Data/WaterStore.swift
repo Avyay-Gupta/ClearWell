@@ -22,6 +22,10 @@ final class WaterStore {
     private(set) var tests: [WaterTest] = []
     var profile: HouseholdProfile? { didSet { save() } }
     var settings = AppSettings() { didSet { save() } }
+    /// Meter readings, bills, habits and goal for the Conserve tab.
+    var conservation = ConservationData() { didSet { save() } }
+    /// Community challenges this household joined, by challenge ID.
+    var challengeParticipation: [String: ChallengeParticipation] = [:] { didSet { save() } }
 
     private let fileURL: URL
     private var isLoading = false
@@ -30,6 +34,9 @@ final class WaterStore {
         var tests: [WaterTest]
         var profile: HouseholdProfile?
         var settings: AppSettings?
+        // Added later; optional so older saved files still load.
+        var conservation: ConservationData?
+        var challengeParticipation: [String: ChallengeParticipation]?
     }
 
     init(fileURL: URL = WaterStore.defaultFileURL) {
@@ -54,6 +61,9 @@ final class WaterStore {
 
     /// The household profile, or defaults if onboarding hasn't finished yet.
     var currentProfile: HouseholdProfile { profile ?? HouseholdProfile() }
+
+    /// Periods of water use worked out from readings and bills, oldest first.
+    var usageIntervals: [UsageInterval] { UsageAnalysis.intervals(from: conservation.entries) }
 
     // MARK: - Changing
 
@@ -80,9 +90,21 @@ final class WaterStore {
         save()
     }
 
-    /// Replaces all tests with the demo set (hidden option for the demo video).
+    // MARK: - Water use
+
+    func addUsage(_ entry: UsageEntry) {
+        conservation.entries.append(entry)
+        conservation.entries.sort { $0.date < $1.date }
+    }
+
+    func deleteUsage(_ entry: UsageEntry) {
+        conservation.entries.removeAll { $0.id == entry.id }
+    }
+
+    /// Replaces all tests and water use with the demo set (hidden option for the demo video).
     func loadDemoData() {
         tests = DemoData.tests()
+        conservation = DemoData.conservation()
         if profile == nil { profile = DemoData.profile }
         sortAndSave()
     }
@@ -91,6 +113,8 @@ final class WaterStore {
         tests = []
         profile = nil
         settings = AppSettings()
+        conservation = ConservationData()
+        challengeParticipation = [:]
         save()
     }
 
@@ -109,11 +133,14 @@ final class WaterStore {
         tests = saved.tests.sorted { $0.date > $1.date }
         profile = saved.profile
         settings = saved.settings ?? AppSettings()
+        conservation = saved.conservation ?? ConservationData()
+        challengeParticipation = saved.challengeParticipation ?? [:]
     }
 
     private func save() {
         guard !isLoading else { return }
-        let saved = SavedData(tests: tests, profile: profile, settings: settings)
+        let saved = SavedData(tests: tests, profile: profile, settings: settings,
+                              conservation: conservation, challengeParticipation: challengeParticipation)
         do {
             let data = try JSONEncoder().encode(saved)
             try data.write(to: fileURL, options: [.atomic, .completeFileProtection])

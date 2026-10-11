@@ -80,12 +80,19 @@ export async function askForJson(params: {
   }
 }
 
-/** Shared request handling: optional app token, JSON body, friendly errors. */
-export async function handleJson(request: Request, handler: (body: unknown) => Promise<unknown>): Promise<Response> {
+/** If CLEARWELL_APP_TOKEN is set, rejects requests that don't send the same token. */
+export function checkToken(request: Request): Response | null {
   const expectedToken = process.env.CLEARWELL_APP_TOKEN;
   if (expectedToken && request.headers.get("x-clearwell-token") !== expectedToken) {
     return Response.json({ error: "This app isn't allowed to use the ClearWell server. Check the app token in Settings." }, { status: 401 });
   }
+  return null;
+}
+
+/** Shared request handling: optional app token, JSON body, friendly errors. */
+export async function handleJson(request: Request, handler: (body: unknown) => Promise<unknown>): Promise<Response> {
+  const rejected = checkToken(request);
+  if (rejected) return rejected;
 
   let body: unknown;
   try {

@@ -1,8 +1,16 @@
 import Charts
 import SwiftUI
 
-/// A chart per contaminant across every saved test, with the official limit drawn as a line.
-struct HistoryView: View {
+/// Screens inside the Water Quality tab.
+enum QualityRoute: Hashable {
+    case add
+    case form(TestDraft)
+    case results(WaterTest.ID)
+}
+
+/// The Water Quality tab: add a test, and see every saved test with a chart per contaminant
+/// (the official limit drawn as a line).
+struct WaterQualityView: View {
     @Environment(WaterStore.self) private var store
     @Environment(AppRouter.self) private var router
     @State private var selected: Contaminant = .nitrate
@@ -32,7 +40,8 @@ struct HistoryView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        @Bindable var router = router
+        NavigationStack(path: $router.qualityPath) {
             Group {
                 if store.tests.isEmpty {
                     ContentUnavailableView {
@@ -41,8 +50,7 @@ struct HistoryView: View {
                         Text("Each test you add appears here, so you can see whether your water is getting better or worse over the years.")
                     } actions: {
                         Button("Add your first test") {
-                            router.addPath = []
-                            router.tab = .add
+                            router.qualityPath = [.add]
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(.actionBlue)
@@ -52,8 +60,26 @@ struct HistoryView: View {
                 }
             }
             .background(Color.appBackground)
-            .navigationTitle("History")
-            .navigationDestination(for: WaterTest.ID.self) { ResultsView(testID: $0) }
+            .navigationTitle("Water Quality")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        router.qualityPath.append(.add)
+                    } label: {
+                        Label("Add a test", systemImage: "plus")
+                    }
+                }
+            }
+            .navigationDestination(for: QualityRoute.self) { route in
+                switch route {
+                case .add:
+                    AddResultsView()
+                case .form(let draft):
+                    TestFormView(initialDraft: draft)
+                case .results(let id):
+                    ResultsView(testID: id)
+                }
+            }
             .onAppear {
                 if !testedContaminants.contains(selected), let first = testedContaminants.first {
                     selected = first
@@ -75,6 +101,15 @@ struct HistoryView: View {
 
     private var list: some View {
         List {
+            Section {
+                Button {
+                    router.qualityPath.append(.add)
+                } label: {
+                    Label("Add a water test", systemImage: "plus.circle.fill")
+                        .font(.headline)
+                }
+            }
+
             Section {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
@@ -119,7 +154,7 @@ struct HistoryView: View {
 
             Section("All tests") {
                 ForEach(store.tests) { test in
-                    NavigationLink(value: test.id) {
+                    NavigationLink(value: QualityRoute.results(test.id)) {
                         TestRow(test: test, profile: store.currentProfile)
                     }
                     .swipeActions {

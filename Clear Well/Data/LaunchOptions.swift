@@ -2,29 +2,38 @@ import Foundation
 
 #if DEBUG
 /// Developer shortcut: open the app straight to one screen, for screenshots and demo recording.
-/// In Xcode: Product → Scheme → Edit Scheme → Run → Arguments, add `-ClearWellScreen results`.
-/// Screens: add, form, scan-review, results, history, help. Only exists in Debug builds.
+/// In Xcode: Product → Scheme → Edit Scheme → Run → Arguments, add `-ClearWellScreen results`
+/// (and `-ClearWellDemoData YES` to start with the demo household).
+/// Screens: add, form, scan-review, results, quality, conserve, community, help. Debug builds only.
 enum LaunchOptions {
     static func apply(to router: AppRouter, store: WaterStore) {
+        // `-ClearWellDemoData YES` starts with the demo household (handy for recording the video).
+        if UserDefaults.standard.bool(forKey: "ClearWellDemoData") {
+            store.loadDemoData()
+        }
         guard let screen = UserDefaults.standard.string(forKey: "ClearWellScreen") else { return }
         let county = store.currentProfile.county
 
         switch screen {
         case "add":
-            router.tab = .add
+            router.showAddResults()
         case "form":
-            router.tab = .add
-            router.addPath = [.form(TestDraft(county: county))]
+            router.tab = .quality
+            router.qualityPath = [.form(TestDraft(county: county))]
         case "scan-review":
-            router.tab = .add
-            router.addPath = [.form(TestDraft(scan: sampleScan, county: county))]
+            router.tab = .quality
+            router.qualityPath = [.form(TestDraft(scan: sampleScan, county: county))]
         case "results":
             if let latest = store.latestTest {
-                router.tab = .add
-                router.addPath = [.results(latest.id)]
+                router.tab = .quality
+                router.qualityPath = [.results(latest.id)]
             }
-        case "history":
-            router.tab = .history
+        case "quality", "history":
+            router.tab = .quality
+        case "conserve":
+            router.tab = .conserve
+        case "community":
+            router.tab = .community
         case "help":
             router.tab = .help
         default:

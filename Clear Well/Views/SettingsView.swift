@@ -23,9 +23,14 @@ struct SettingsView: View {
     var body: some View {
         Form {
             Section {
+                Picker("Water comes from", selection: profile.waterSource) {
+                    ForEach(WaterSource.allCases) { Text($0.label).tag($0) }
+                }
                 Toggle("Baby or pregnant person at home", isOn: profile.infantOrPregnant)
-                Picker("Age of well", selection: profile.wellAge) {
-                    ForEach(WellAge.allCases) { Text($0.label).tag($0) }
+                if store.currentProfile.hasPrivateWell {
+                    Picker("Age of well", selection: profile.wellAge) {
+                        ForEach(WellAge.allCases) { Text($0.label).tag($0) }
+                    }
                 }
                 Picker("County", selection: profile.county) {
                     ForEach(County.allCases) { Text($0.fullName).tag($0) }
@@ -37,17 +42,28 @@ struct SettingsView: View {
             }
 
             Section {
-                Toggle("Remind me when a test is due", isOn: Binding(
-                    get: { store.settings.remindersOn },
-                    set: { turnOn in Task { await setReminders(turnOn) } }))
+                NavigationLink("Household habits") { HabitsForm() }
             } header: {
-                Text("Reminders")
+                Text("Water use")
             } footer: {
-                if remindersDenied {
-                    Text("Notifications are turned off for ClearWell. Turn them on in the iPhone Settings app.")
-                } else {
-                    Text("Reminders follow the Minnesota Department of Health testing schedule.")
+                Text("Used to suggest conservation ideas on the Conserve tab.")
+            }
+
+            if store.currentProfile.hasPrivateWell {
+                Section {
+                    Toggle("Remind me when a test is due", isOn: Binding(
+                        get: { store.settings.remindersOn },
+                        set: { turnOn in Task { await setReminders(turnOn) } }))
+                } header: {
+                    Text("Reminders")
+                } footer: {
+                    if remindersDenied {
+                        Text("Notifications are turned off for ClearWell. Turn them on in the iPhone Settings app.")
+                    } else {
+                        Text("Reminders follow the Minnesota Department of Health testing schedule.")
+    
                 }
+            }
             }
 
             Section {

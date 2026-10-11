@@ -1,27 +1,38 @@
 import SwiftUI
 
-/// First launch: a welcome screen and three quick questions about the household.
+/// First launch: a welcome screen and a few quick questions about the household.
 struct OnboardingView: View {
     @Environment(WaterStore.self) private var store
-    @State private var step = 0
+    @State private var index = 0
     @State private var draft = HouseholdProfile()
+    @State private var answeredSource = false
     @State private var answeredInfant = false
     @State private var answeredWellAge = false
 
-    private let questionCount = 3
+    private enum Step {
+        case welcome, waterSource, infant, wellAge, county
+    }
+
+    /// City-water homes skip the well-age question.
+    private var steps: [Step] {
+        draft.hasPrivateWell
+            ? [.welcome, .waterSource, .infant, .wellAge, .county]
+            : [.welcome, .waterSource, .infant, .county]
+    }
 
     var body: some View {
         VStack(spacing: 0) {
-            if step > 0 {
+            if index > 0 {
                 header
             }
 
             Group {
-                switch step {
-                case 0: welcome
-                case 1: infantQuestion
-                case 2: wellAgeQuestion
-                default: countyQuestion
+                switch steps[min(index, steps.count - 1)] {
+                case .welcome: welcome
+                case .waterSource: waterSourceQuestion
+                case .infant: infantQuestion
+                case .wellAge: wellAgeQuestion
+                case .county: countyQuestion
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -29,7 +40,11 @@ struct OnboardingView: View {
         }
         .padding(.horizontal, 24)
         .background(Color.appBackground)
-        .animation(.easeInOut(duration: 0.25), value: step)
+        .animation(.easeInOut(duration: 0.25), value: index)
+    }
+
+    private func next() {
+        index = min(index + 1, steps.count - 1)
     }
 
     // MARK: - Header
@@ -37,12 +52,12 @@ struct OnboardingView: View {
     private var header: some View {
         HStack {
             Button {
-                step -= 1
+                index -= 1
             } label: {
                 Label("Back", systemImage: "chevron.left")
             }
             Spacer()
-            Text("Question \(step) of \(questionCount)")
+            Text("Question \(index) of \(steps.count - 1)")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
@@ -62,7 +77,7 @@ struct OnboardingView: View {
             VStack(spacing: 10) {
                 Text("ClearWell")
                     .font(.largeTitle.bold())
-                Text("Understand your well water test in plain English — what's safe, what's not, and what to do next.")
+                Text("Understand your water test in plain English, use water wisely, and help protect the water your community shares.")
                     .font(.title3)
                     .multilineTextAlignment(.center)
                     .foregroundStyle(.secondary)
@@ -71,14 +86,14 @@ struct OnboardingView: View {
             VStack(alignment: .leading, spacing: 16) {
                 feature("checkmark.shield.fill", "Colors come only from official EPA and Minnesota Department of Health limits.")
                 feature("sparkles", "AI explains what your results mean for your family.")
-                feature("lock.fill", "Your test results stay on this phone.")
+                feature("lock.fill", "Your test results and water use stay on this phone.")
             }
             .card()
 
             Spacer()
 
             Button {
-                step = 1
+                next()
             } label: {
                 Text("Get started")
                     .font(.headline)
@@ -92,6 +107,23 @@ struct OnboardingView: View {
         }
     }
 
+    private var waterSourceQuestion: some View {
+        question(
+            title: "Where does your home's water come from?",
+            subtitle: "Private wells aren't tested by anyone but the owner. City water is tested by your water supplier. ClearWell helps with both.") {
+            choice(WaterSource.privateWell.label, icon: "drop.circle", selected: answeredSource && draft.waterSource == .privateWell) {
+                draft.waterSource = .privateWell
+                answeredSource = true
+                next()
+            }
+            choice(WaterSource.municipal.label, icon: "building.2", selected: answeredSource && draft.waterSource == .municipal) {
+                draft.waterSource = .municipal
+                answeredSource = true
+                next()
+            }
+        }
+    }
+
     private var infantQuestion: some View {
         question(
             title: "Is there a baby or a pregnant person in your home?",
@@ -99,12 +131,12 @@ struct OnboardingView: View {
             choice("Yes", icon: "figure.and.child.holdinghands", selected: answeredInfant && draft.infantOrPregnant) {
                 draft.infantOrPregnant = true
                 answeredInfant = true
-                step = 2
+                next()
             }
             choice("No", icon: "person.2", selected: answeredInfant && !draft.infantOrPregnant) {
                 draft.infantOrPregnant = false
                 answeredInfant = true
-                step = 2
+                next()
             }
         }
     }
@@ -117,7 +149,7 @@ struct OnboardingView: View {
                 choice(age.label, icon: "calendar", selected: answeredWellAge && draft.wellAge == age) {
                     draft.wellAge = age
                     answeredWellAge = true
-                    step = 3
+                    next()
                 }
             }
         }
@@ -126,7 +158,7 @@ struct OnboardingView: View {
     private var countyQuestion: some View {
         question(
             title: "Which county do you live in?",
-            subtitle: "ClearWell shows testing labs and well experts near you.") {
+            subtitle: "ClearWell shows local water conditions, testing labs and experts near you.") {
             ForEach(County.allCases) { county in
                 choice(county.fullName, icon: "mappin.and.ellipse", selected: false) {
                     draft.county = county
